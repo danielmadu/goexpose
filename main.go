@@ -4,19 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/danielmadu/goexpose/config"
 	"github.com/danielmadu/goexpose/router"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/net/websocket"
 )
 
 var (
-	token    string
-	hostname string
+	token string
 )
 
 func main() {
@@ -59,6 +59,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
+		fmt.Println("Fechou")
 		log.Fatal(err)
 	}
 
@@ -74,13 +75,89 @@ func startServer(cli *cli.Context) error {
 	return router.Init()
 }
 
+func EchoServer(ws *websocket.Conn) {
+	io.Copy(ws, ws)
+}
+
 func startShare(cli *cli.Context) error {
+	if cli.NArg() == 0 {
+		fmt.Println("You must pass the local URL that you want to share")
+		return nil
+	}
+
+	if cli.NArg() > 1 {
+		fmt.Println("Too many arguments")
+		return nil
+	}
+
+	sharedHost := cli.Args().Get(0)
+
+	localConfig := config.GetLocalConfig()
+
+	localConfig.SharedHostname = sharedHost
+
 	fmt.Println("Press CTRL+C to exit")
+
+	origin := "http://localhost/"
+	url := "ws://localhost:3000/goexpose/ws"
+	ws, err := websocket.Dial(url, "", origin)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	message := config.GetLocalMessage()
+
+	var msg = make([]byte, 1048576)
+	client := &http.Client{}
 	for {
-		if err := ping(); err != nil {
-			return err
+
+		var n int
+		if n, err = ws.Read(msg); err != nil {
+			continue
 		}
-		time.Sleep(15 * time.Second)
+
+		resp := fmt.Sprintf("%s", msg[:n])
+		if resp == "ping" {
+			continue
+		}
+
+		if err := message.Decode(msg[:n]); err != nil {
+			continue
+		}
+		if message.Path != "" {
+			req, _ := http.NewRequest(message.Method, localConfig.SharedHostname+message.Path, bytes.NewBufferString(message.Body))
+
+			for k, v := range message.Headers {
+				req.Header.Set(k, v)
+			}
+
+			response, err := client.Do(req)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			respBody, _ := io.ReadAll(response.Body)
+
+			headers := make(map[string]string)
+
+			for k := range response.Header {
+				headers[k] = response.Header.Get(k)
+			}
+
+			messageResponse := config.Message{
+				Body:    string(respBody),
+				Headers: headers,
+				Status:  response.StatusCode,
+			}
+
+			encoded, _ := messageResponse.Encode()
+
+			if _, err := ws.Write(encoded); err != nil {
+				fmt.Println(err)
+			}
+		}
+
 	}
 }
 

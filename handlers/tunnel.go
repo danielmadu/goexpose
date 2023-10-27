@@ -3,8 +3,6 @@ package handlers
 import (
 	"fmt"
 	"io"
-	"log"
-	"net/http"
 
 	"github.com/danielmadu/goexpose/config"
 	"github.com/gin-gonic/gin"
@@ -12,45 +10,44 @@ import (
 
 func Tunnel(c *gin.Context) {
 
-	client := &http.Client{}
-
-	config := config.GetConfig()
-
-	formatted := fmt.Sprintf("%s%s", config.Shared, c.Request.URL)
-
-	fmt.Println(formatted)
-
 	defer c.Request.Body.Close()
 
 	reqBody := getBody(c)
 
-	req, _ := http.NewRequest(c.Request.Method, formatted, reqBody)
+	headers := make(map[string]string)
 
 	for k := range c.Request.Header {
-		c.Header(k, c.Request.Header.Get(k))
+		headers[k] = c.Request.Header.Get(k)
 	}
 
-	resp, err := client.Do(req)
-
+	body, err := io.ReadAll(reqBody)
 	if err != nil {
-		log.Println(err)
-		c.AbortWithError(500, err)
+		fmt.Println(err)
 		return
 	}
 
-	log.Println(c.Request.Method)
-
-	for k := range resp.Header {
-		c.Header(k, resp.Header.Get(k))
+	message := config.Message{
+		Path:    c.Request.URL.String(),
+		Headers: headers,
+		Body:    string(body),
+		Method:  c.Request.Method,
 	}
 
-	c.Status(resp.StatusCode)
+	messageResponse := config.Message{}
 
-	defer resp.Body.Close()
+	channel := config.GetChannel()
 
-	body, _ := io.ReadAll(resp.Body)
+	channel <- message
 
-	c.Data(resp.StatusCode, resp.Header.Get("Contet-Type"), body)
+	messageResponse = <-channel
+
+	fmt.Println(messageResponse.Body)
+
+	for k, v := range messageResponse.Headers {
+		c.Header(k, v)
+	}
+
+	c.Data(messageResponse.Status, c.GetHeader("Contet-Type"), []byte(messageResponse.Body))
 }
 
 func getBody(c *gin.Context) io.ReadCloser {
