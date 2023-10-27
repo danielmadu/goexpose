@@ -7,7 +7,7 @@ With GoExpose is possible to create public URLs for local sites. You can receive
 
 ## Reading the code
 
-⚠️ GoExpose is my firts golang project. I made them for studies purpose and is not complete, feel free to send PRs.
+⚠️ GoExpose is my first golang project. I made them for studies purpose and is not complete, feel free to send PRs.
 
 ## Requirements
 
