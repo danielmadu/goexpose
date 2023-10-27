@@ -15,7 +15,7 @@ With GoExpose is possible to create public URLs for local sites. You can receive
 
  ## How to install
 
-You can compile running `bo build .`
+You can compile running `go build .`
 
 ## Example
 
