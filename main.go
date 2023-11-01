@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -165,29 +164,4 @@ func startShare(cli *cli.Context) error {
 		}
 
 	}
-}
-
-type Ping struct {
-	Port string `json:"port"`
-}
-
-func ping() error {
-	client := &http.Client{}
-	ping := config.Ping{
-		Port: "8080",
-	}
-	body, _ := json.Marshal(ping)
-	req, _ := http.NewRequest(http.MethodPost, "http://localhost:3000/goexpose/api/ping", bytes.NewReader(body))
-	req.Header.Add("Authorization", "Bearer "+token)
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("fail to try refresh server infos")
-	}
-
-	return nil
 }
