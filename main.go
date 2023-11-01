@@ -61,6 +61,13 @@ func main() {
 						Destination: &serverUrl,
 						Required:    true,
 					},
+					&cli.StringFlag{
+						Name:        "token",
+						Value:       "",
+						Aliases:     []string{"t"},
+						Usage:       "Pass the authentication token (optional)",
+						Destination: &token,
+					},
 				},
 			},
 		},
@@ -77,7 +84,7 @@ func startServer(cli *cli.Context) error {
 
 	config.Token = token
 
-	fmt.Println(config.Token)
+	fmt.Println("GoExpose listening on port :3000")
 
 	return router.Init()
 }
@@ -102,7 +109,7 @@ func startShare(cli *cli.Context) error {
 	fmt.Println("Press CTRL+C to exit")
 
 	origin := "http://localhost/"
-	url := fmt.Sprintf("ws://%s/goexpose/ws", serverUrl)
+	url := fmt.Sprintf("ws://%s/goexpose/ws?token=%s", serverUrl, token)
 	ws, err := websocket.Dial(url, "", origin)
 	if err != nil {
 		fmt.Println(err)
