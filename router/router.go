@@ -6,6 +6,9 @@ import (
 )
 
 func Init() error {
+
+	gin.SetMode(gin.ReleaseMode)
+
 	router := gin.Default()
 
 	router.Any("/*all", handlers.All)
