@@ -21,5 +21,5 @@ You can compile running `go build .`
 
 To create a server: `goexpose server`
 
-To share your local site: `goexpose share http://localhost:8080`
+To share your local site: `goexpose share --server=localhost:3000 http://localhost:8080`
 
