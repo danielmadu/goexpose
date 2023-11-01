@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	token string
+	token     string
+	serverUrl string
 )
 
 func main() {
@@ -54,6 +55,15 @@ func main() {
 				Name:   "share",
 				Usage:  "Share a local url with a remote GoExpose server",
 				Action: startShare,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "server",
+						Value:       "",
+						Usage:       "Define the server to connect (required)",
+						Destination: &serverUrl,
+						Required:    true,
+					},
+				},
 			},
 		},
 	}
@@ -73,10 +83,6 @@ func startServer(cli *cli.Context) error {
 	fmt.Println(config.Token)
 
 	return router.Init()
-}
-
-func EchoServer(ws *websocket.Conn) {
-	io.Copy(ws, ws)
 }
 
 func startShare(cli *cli.Context) error {
@@ -99,7 +105,7 @@ func startShare(cli *cli.Context) error {
 	fmt.Println("Press CTRL+C to exit")
 
 	origin := "http://localhost/"
-	url := "ws://localhost:3000/goexpose/ws"
+	url := fmt.Sprintf("ws://%s/goexpose/ws", serverUrl)
 	ws, err := websocket.Dial(url, "", origin)
 	if err != nil {
 		fmt.Println(err)
