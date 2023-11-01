@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 
@@ -68,8 +67,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Println("Fechou")
-		log.Fatal(err)
+
 	}
 
 }
