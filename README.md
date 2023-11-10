@@ -31,4 +31,4 @@ To add support to SSL connections use the flags `--certFile` and `--keyFile` in 
 goexpose server --certFile=/etc/letsencrypt/live/example.com/fullchain.crt --keyFile=/etc/letsencrypt/live/example.com/privkey.key
 ```
 
-When execute the client just change the server url protocol to `http`
+When execute the client just change the server url protocol to `https`
