@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/danielmadu/goexpose/config"
@@ -21,6 +22,8 @@ var (
 func main() {
 
 	config.Init()
+
+	conf := config.GetConfig()
 
 	app := &cli.App{
 		Name:  "goexpose",
@@ -46,6 +49,20 @@ func main() {
 						Aliases:     []string{"t"},
 						Usage:       "Define a authentication token (optional)",
 						Destination: &token,
+					},
+					&cli.StringFlag{
+						Name:        "certFile",
+						Value:       "",
+						Aliases:     []string{"c"},
+						Usage:       "Certificate file",
+						Destination: &conf.CertFile,
+					},
+					&cli.StringFlag{
+						Name:        "keyFile",
+						Value:       "",
+						Aliases:     []string{"k"},
+						Usage:       "Key file",
+						Destination: &conf.KeyFile,
 					},
 				},
 			},
@@ -74,7 +91,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-
+		fmt.Println(err)
 	}
 
 }
@@ -108,8 +125,25 @@ func startShare(cli *cli.Context) error {
 
 	fmt.Println("Press CTRL+C to exit")
 
+	val, err := url.Parse(serverUrl)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	wsprotocol := "ws"
+	if val.Scheme == "https" {
+		wsprotocol = "wss"
+	}
+
+	if val.Scheme == "" || (val.Scheme != "http" && val.Scheme != "https") {
+		return fmt.Errorf("Invalid server url, you must define the protocol (http, https)")
+	}
+
+	serverUrl = val.Host
+
 	origin := "http://localhost/"
-	url := fmt.Sprintf("ws://%s/goexpose/ws?token=%s", serverUrl, token)
+	url := fmt.Sprintf("%s://%s/goexpose/ws?token=%s", wsprotocol, serverUrl, token)
 	ws, err := websocket.Dial(url, "", origin)
 	if err != nil {
 		fmt.Println(err)

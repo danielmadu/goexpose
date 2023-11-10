@@ -5,9 +5,11 @@ import (
 )
 
 type Config struct {
-	Shared string `json:"shared"`
-	Token  string `json:"-"`
-	Client string `json:"client"`
+	Shared   string `json:"shared"`
+	Token    string `json:"-"`
+	Client   string `json:"client"`
+	CertFile string
+	KeyFile  string
 }
 
 type Ping struct {
