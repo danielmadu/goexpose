@@ -12,3 +12,4 @@
 [] Add version
 [] Add github actions
 [] Write a better README
+[] Add HTTPS support
