@@ -21,5 +21,14 @@ You can compile running `go build .`
 
 To create a server: `goexpose server`
 
-To share your local site: `goexpose share --server=localhost:3000 http://localhost:8080`
+To share your local site: `goexpose share --server=http://localhost:3000 http://localhost:8080`
 
+## SSL Suport
+
+To add support to SSL connections use the flags `--certFile` and `--keyFile` in server command:
+
+```bash
+goexpose server --certFile=/etc/letsencrypt/live/example.com/fullchain.crt --keyFile=/etc/letsencrypt/live/example.com/privkey.key
+```
+
+When execute the client just change the server url protocol to `http`
