@@ -32,3 +32,9 @@ goexpose server --certFile=/etc/letsencrypt/live/example.com/fullchain.crt --key
 ```
 
 When execute the client just change the server url protocol to `https`
+
+## Basic Auth
+
+To enable the Basic Auth just pass the `--basicAuth` flag with the user and password separated by `:` like the example bellow:
+
+`goexpose share --basicAuth=test:password --server=http://localhost:3000 http://localhost:8080`
