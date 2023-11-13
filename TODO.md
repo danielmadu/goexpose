@@ -13,3 +13,4 @@
 - [ ] Add github actions
 - [ ] Write a better README
 - [x] Add SSL support
+- [ ] Add HTTP Basic Auth support
