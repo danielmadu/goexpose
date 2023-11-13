@@ -1,5 +1,5 @@
 
-- [x] Change connection between serve rand client to websocket
+- [x] Change connection between serve and client to websocket
 - [ ] BUG: when disconnect the client and connect again the server lose the reference, the last connectin wasn't destroyed 
 - [x] Add token authentication
 - [x] Add server host parammeter to share command
