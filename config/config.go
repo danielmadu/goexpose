@@ -17,7 +17,9 @@ type Ping struct {
 }
 
 type LocalConfig struct {
-	SharedHostname string `json:"shared_hostname"`
+	SharedHostname   string `json:"shared_hostname"`
+	BasicAuth        string
+	EnabledBasicAuth bool
 }
 
 type Message struct {

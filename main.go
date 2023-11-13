@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/danielmadu/goexpose/config"
 	"github.com/danielmadu/goexpose/router"
@@ -15,8 +16,9 @@ import (
 )
 
 var (
-	token     string
-	serverUrl string
+	token       string
+	serverUrl   string
+	localConfig *config.LocalConfig
 )
 
 func main() {
@@ -24,6 +26,7 @@ func main() {
 	config.Init()
 
 	conf := config.GetConfig()
+	localConfig = config.GetLocalConfig()
 
 	app := &cli.App{
 		Name:  "goexpose",
@@ -85,6 +88,12 @@ func main() {
 						Usage:       "Pass the authentication token (optional)",
 						Destination: &token,
 					},
+					&cli.StringFlag{
+						Name:        "basicAuth",
+						Value:       "",
+						Usage:       "Pass the user:password to basic authentication  (optional)",
+						Destination: &localConfig.BasicAuth,
+					},
 				},
 			},
 		},
@@ -107,6 +116,7 @@ func startServer(cli *cli.Context) error {
 }
 
 func startShare(cli *cli.Context) error {
+
 	if cli.NArg() == 0 {
 		fmt.Println("You must pass the local URL that you want to share")
 		return nil
@@ -117,11 +127,14 @@ func startShare(cli *cli.Context) error {
 		return nil
 	}
 
+	if splited := strings.Split(localConfig.BasicAuth, ":"); len(splited) == 2 {
+		localConfig.EnabledBasicAuth = true
+	}
+
 	sharedHost := cli.Args().Get(0)
 
-	localConfig := config.GetLocalConfig()
-
 	localConfig.SharedHostname = sharedHost
+	messageResponse := config.Message{}
 
 	fmt.Println("Press CTRL+C to exit")
 
@@ -168,6 +181,7 @@ func startShare(cli *cli.Context) error {
 		if err := message.Decode(msg[:n]); err != nil {
 			continue
 		}
+
 		if message.Path != "" {
 			req, _ := http.NewRequest(message.Method, localConfig.SharedHostname+message.Path, bytes.NewBufferString(message.Body))
 
@@ -175,32 +189,63 @@ func startShare(cli *cli.Context) error {
 				req.Header.Set(k, v)
 			}
 
-			response, err := client.Do(req)
-			if err != nil {
-				fmt.Println(err)
+			if localConfig.EnabledBasicAuth {
+
+				user, passwd, _ := req.BasicAuth()
+
+				basicAuth := strings.Split(localConfig.BasicAuth, ":")
+
+				if user == basicAuth[0] && passwd == basicAuth[1] {
+					execute(client, req, ws)
+					continue
+				}
+
+				messageResponse = config.Message{
+					Body:    "Unauthorized",
+					Status:  401,
+					Headers: make(map[string]string),
+				}
+
+				messageResponse.Headers["WWW-Authenticate"] = `Basic realm="restricted", charset="UTF-8"`
+				sendResponse(messageResponse, ws)
 				continue
 			}
 
-			respBody, _ := io.ReadAll(response.Body)
+			execute(client, req, ws)
 
-			headers := make(map[string]string)
-
-			for k := range response.Header {
-				headers[k] = response.Header.Get(k)
-			}
-
-			messageResponse := config.Message{
-				Body:    string(respBody),
-				Headers: headers,
-				Status:  response.StatusCode,
-			}
-
-			encoded, _ := messageResponse.Encode()
-
-			if _, err := ws.Write(encoded); err != nil {
-				fmt.Println(err)
-			}
 		}
 
 	}
+}
+
+func sendResponse(messageResponse config.Message, ws *websocket.Conn) {
+	encoded, _ := messageResponse.Encode()
+
+	if _, err := ws.Write(encoded); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func execute(client *http.Client, req *http.Request, ws *websocket.Conn) {
+	response, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	respBody, _ := io.ReadAll(response.Body)
+
+	headers := make(map[string]string)
+
+	for k := range response.Header {
+		headers[k] = response.Header.Get(k)
+	}
+
+	messageResponse := config.Message{
+		Body:    string(respBody),
+		Headers: headers,
+		Status:  response.StatusCode,
+	}
+
+	sendResponse(messageResponse, ws)
 }
