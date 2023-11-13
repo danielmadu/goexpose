@@ -13,4 +13,4 @@
 - [ ] Add github actions to automate releases
 - [ ] Write a better README
 - [x] Add SSL support
-- [ ] Add HTTP Basic Auth support
+- [x] Add HTTP Basic Auth support
