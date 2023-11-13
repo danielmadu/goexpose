@@ -10,7 +10,7 @@
 - [x] Remove gin-gonic debug logs
 - [ ] Refactor the share command
 - [ ] Add version
-- [ ] Add github actions
+- [ ] Add github actions to automate releases
 - [ ] Write a better README
 - [x] Add SSL support
 - [ ] Add HTTP Basic Auth support
