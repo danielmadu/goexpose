@@ -14,3 +14,4 @@
 - [ ] Write a better README
 - [x] Add SSL support
 - [x] Add HTTP Basic Auth support
+- [ ] Handle signal interrupt
