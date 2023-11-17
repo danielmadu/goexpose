@@ -6,7 +6,7 @@
 - [ ] Add port parammeter to server command
 - [ ] Add tests
 - [ ] Add server customized logs
-- [ ] Add share customized logs
+- [x] Add share customized logs
 - [x] Remove gin-gonic debug logs
 - [ ] Refactor the share command
 - [ ] Add version
