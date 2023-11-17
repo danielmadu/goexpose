@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/InVisionApp/tabular"
 	"github.com/danielmadu/goexpose/config"
 	"github.com/danielmadu/goexpose/router"
 	"github.com/urfave/cli/v2"
@@ -19,7 +20,15 @@ var (
 	token       string
 	serverUrl   string
 	localConfig *config.LocalConfig
+	tab         tabular.Table
 )
+
+func init() {
+	tab = tabular.New()
+	tab.Col("method", "Method", 6)
+	tab.Col("path", "Path", 70)
+	tab.Col("status", "Status", 6)
+}
 
 func main() {
 
@@ -134,7 +143,7 @@ func startShare(cli *cli.Context) error {
 	sharedHost := cli.Args().Get(0)
 
 	localConfig.SharedHostname = sharedHost
-	messageResponse := config.Message{}
+	messageResponse := &config.Message{}
 
 	fmt.Println("Press CTRL+C to exit")
 
@@ -166,6 +175,8 @@ func startShare(cli *cli.Context) error {
 
 	var msg = make([]byte, 1048576)
 	client := &http.Client{}
+
+	format := tab.Print("*")
 	for {
 
 		var n int
@@ -200,25 +211,27 @@ func startShare(cli *cli.Context) error {
 					continue
 				}
 
-				messageResponse = config.Message{
-					Body:    "Unauthorized",
-					Status:  401,
-					Headers: make(map[string]string),
-				}
+				messageResponse.Body = "Unauthorized"
+				messageResponse.Status = 401
+				messageResponse.Headers = make(map[string]string)
 
 				messageResponse.Headers["WWW-Authenticate"] = `Basic realm="restricted", charset="UTF-8"`
 				sendResponse(messageResponse, ws)
 				continue
 			}
 
-			execute(client, req, ws)
+			response := execute(client, req, ws)
+
+			if response != nil {
+				fmt.Printf(format, message.Method, message.Path, response.GetStatus())
+			}
 
 		}
 
 	}
 }
 
-func sendResponse(messageResponse config.Message, ws *websocket.Conn) {
+func sendResponse(messageResponse *config.Message, ws *websocket.Conn) {
 	encoded, _ := messageResponse.Encode()
 
 	if _, err := ws.Write(encoded); err != nil {
@@ -226,11 +239,11 @@ func sendResponse(messageResponse config.Message, ws *websocket.Conn) {
 	}
 }
 
-func execute(client *http.Client, req *http.Request, ws *websocket.Conn) {
+func execute(client *http.Client, req *http.Request, ws *websocket.Conn) config.MessageInterface {
 	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil
 	}
 
 	respBody, _ := io.ReadAll(response.Body)
@@ -241,11 +254,13 @@ func execute(client *http.Client, req *http.Request, ws *websocket.Conn) {
 		headers[k] = response.Header.Get(k)
 	}
 
-	messageResponse := config.Message{
+	messageResponse := &config.Message{
 		Body:    string(respBody),
 		Headers: headers,
 		Status:  response.StatusCode,
 	}
 
 	sendResponse(messageResponse, ws)
+
+	return messageResponse
 }

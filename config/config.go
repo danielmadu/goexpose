@@ -4,6 +4,14 @@ import (
 	"encoding/json"
 )
 
+type MessageInterface interface {
+	Encode() ([]byte, error)
+	Decode(data []byte) error
+	GetPath() string
+	GetMethod() string
+	GetStatus() int
+}
+
 type Config struct {
 	Shared   string `json:"shared"`
 	Token    string `json:"-"`
@@ -36,6 +44,18 @@ func (m *Message) Encode() ([]byte, error) {
 
 func (m *Message) Decode(data []byte) error {
 	return json.Unmarshal(data, m)
+}
+
+func (m *Message) GetPath() string {
+	return m.Path
+}
+
+func (m *Message) GetMethod() string {
+	return m.Method
+}
+
+func (m *Message) GetStatus() int {
+	return m.Status
 }
 
 var (

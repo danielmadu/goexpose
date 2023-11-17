@@ -3,6 +3,7 @@ module github.com/danielmadu/goexpose
 go 1.21.3
 
 require (
+	github.com/InVisionApp/tabular v0.3.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/net v0.10.0
