@@ -3,7 +3,7 @@ GoExpose
 
 Project inspired by [Expose](https://github.com/beyondcode/expose)
 
-With GoExpose is possible to create public URLs for local sites. You can receive Webhooks on your local eviorement and share your local projects with others.
+With GoExpose is possible to create public URLs for local sites. You can receive Webhooks on your local environment and share your local projects with others.
 
 ## Reading the code
 
